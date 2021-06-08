@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>	
+<%- include("../partials/header.ejs") %>
+</head>
+
+
+<body onload="fixPaginationButtons()">
+
+<div id="psTail" style="display: none" chname="<%= data.fixedname %>"><%=data.psTail%></div>
+
+<%- include("../partials/nav.ejs") %>
+
+<% if (!data.error){ %>
+	<div id="selection-list" style="display: none">
+		<div id="selection-list-header">Selected media:</div>
+		<div id="selection-preview-list"></div>
+		<div class="dl-button-container">
+			<button autocomplete="off" class="fancy-button-green" onclick="PowerShell_downloadScript()" id="ps-download-button">Download</button>
+		</div>
+	</div>
+	<div id="visual-guide-popup" style="display:none;" onclick="hide(this)">
+		<div id="visual-guide-content">
+			<div class="fake-msg">
+				<div class="fake-av-containter">
+					<img class="fake-av" src="<%=data.botUser.avatarURL%>">
+				</div>
+				<div>
+					<div><span class="chatlog__author-name" style="color: rgb(170, 235, 209)" ><%=data.botUser.username%></span><span class="chatlog__bot-tag">BOT</span><span class="chatlog__timestamp">29/05/2019</span></div>
+					<div id="guide-text">You're almost there! Here's how the last step works:</div>
+				</div>
+			</div>
+			<video id="guide-vid" preload="metadata" autoplay loop>
+				<source src="/visual-guide.mp4" type="video/mp4">
+			</video>
+		</div>
+	</div>
+<% }%>
+
+<% if (data.error){ %>
+	<%- include("../partials/error.ejs") %>
+<% } else { %>
+
+<div class="main-grid">
+	<div class="channel-menu">
+		<div class="channel-menu-inside">
+
+			<% for (var i = 0; i < data.channels.length; i++){ %>
+				<a href="<%= `/browse/${data.channels[i].guild.id}/${data.channels[i].id}` %>">
+					<div class="preamble-channel-custom-small">
+						
+						<div class="preamble__guild-icon-container">
+							<img class="channel-small-preview" src="<%= data.channels[i].lastImage %>" onerror="this.onerror=null; this.src='/images/defaultAv.png'">
+						</div>
+						
+						<div class="preamble__entries-container">
+							<div class="preamble__entry preamble__entry--small-channel"><b>#</b> <%= data.channels[i].name %></div>
+						</div>
+						
+					</div>
+				</a>
+			<% } %>
+			
+		</div>
+	</div>
+	
+	<div class="chatlog">
+		<div class="chatlog-inside">
+		
+			<script> const allMediaCount = <%=data.messages.length%> </script>
+			
+			<div class="preamble">
+				<div class="preamble__guild-icon-container">
+				
+					<a href="<%= `/browse/${data.channel.guild.id}` %>">
+						<img class="preamble__guild-icon" src="<%= data.channel.guild.iconURL %>">
+					</a>
+					
+				</div>
+				<div class="preamble__entries-container">
+				
+					<a href="<%= `/browse/${data.channel.guild.id}` %>">
+						<div class="preamble__entry"><%= data.channel.guild.name %></div>
+					</a>
+					
+					<div class="preamble__entry">
+					<% 
+					let parentChannel = data.channel.guild.channels.get(data.channel.parentID)
+					if (parentChannel){
+					%>
+						<%= parentChannel.name %> > <%= data.channel.name %>
+					<%
+					} else {
+					%>
+						<%= data.channel.name %>
+					<%
+					}
+					%>
+					</div>
+					<div class="preamble__entry preamble__entry--small"><%= data.channel.topic %></div>
+
+				</div>
+			</div>
+			
+			<div class="horizontal-elements">
+				<div class="view-mode">
+					View mode:
+					<select id="viewMode" autocomplete="off" onchange="clientSidePagination()"> <!-- make it a form for later, so you can send a value of what stuff to receive from the server -->
+						<option value="0">All media</option>
+						<option value="1">Only images</option>
+						<option value="2">Only videos</option>
+						<option value="3">Don't load anything</option>
+					</select>
+				</div>
+				<div class="to-page-select">
+					<input id="p" autocomplete="off" type="text" value=1 onchange="clientSidePagination()" oninput="numbersOnly(this)" class="small-fancy-text-input"/><span class="small-fancy-text-input-label">page</span>
+				</div>
+				
+				<div class="per-page-select">
+					<input id="m" autocomplete="off" type="text" value=15 onchange="clientSidePagination()" oninput="numbersOnly(this)" class="small-fancy-text-input"/><span class="small-fancy-text-input-label">per page</span>
+				</div>
+				<div class="scaler-el">
+					max width: 
+					<input class="scaler-sc" id="mediaScaler" autocomplete="off" oninput="scaleMedia(this.value)" onchange="scaleMedia(this.value)" type="range" min="50" max="1400" value="600" />
+				</div>
+			</div>
+			
+			<div class="horizontal-elements" id="sticky-panel">
+				<div class="buttons-container">
+					<button id="go-last" autocomplete="off" class="fancy-button" disabled onclick="clientSidePagination('first')">Oldest</button>
+					<button id="go-prev" autocomplete="off" class="fancy-button" disabled onclick="clientSidePagination('prev')"><</button>
+					<button id="current-page-display" autocomplete="off" class="fancy-button">1 / n</button>
+					<button id="go-next" autocomplete="off" class="fancy-button" onclick="clientSidePagination('next')">></button>
+					<button id="go-first" autocomplete="off" class="fancy-button" disabled onclick="clientSidePagination('last')">loading...</button>
+				</div>
+				<label class="preload-container">
+					preload pages?
+					<input type="checkbox" id="preload" onchange="clientSidePagination()">
+					<span class="checkmark"></span>
+				</label>
+				<div class="user-filter-container">
+					<input id="user-filter" autocomplete="off" type="text" value="" onchange="clientSidePagination()" oninput="clientSidePagination()" class="small-fancy-text-input"/><span class="small-fancy-text-input-label">username/id</span>
+				</div>
+				<div class="clear-filter-container">
+					<label class="clear-filter" onclick="clearFilter()">[clear]</label>
+				</div>
+				<div class="buttons-container">
+					<button id="selection-mode-btn" autocomplete="off" class="fancy-button-orange" onclick="enableSelecting()" style="display: none;">Enter gallery mode</button>
+					<button id="gallery-mode-btn" autocomplete="off" class="fancy-button-green" onclick="enableSelecting()">Enter download mode</button>
+				</div>
+				<div id="selection-buttons-container" class="buttons-container" style="display: none;"> 
+					<div class="sbtn-label">select:</div>
+					<button autocomplete="off" class="fancy-button" onclick="selectAllOnPage()" id="select-all-page-btn">this page</button>
+					<button autocomplete="off" class="fancy-button" onclick="selectAll()" disabled id="select-all-btn">loading...</button>
+				</div>
+			</div>
+			<div class="horizontal-elements" id="sticky-panel">
+			</div>
+			
+			<script> initPageValues() </script>
+			<%
+		
+			// backwards... ignore for now...
+			// for (let i = data.messages.length-1; i >= 0 ; i--){
+			
+			let defaultPerPage = 15
+			
+			for (let i = 0; i < data.messages.length; i++){
+				
+				let member = data.channel.guild.members.get(data.messages[i].author)
+				if (!member){
+					member = {
+						id: data.messages[i].author,
+						username: data.messages[i].author, //"Unknown",
+						avatarURL: "/images/defaultAv.png"
+					}
+				}
+				%>
+				
+				<!-- hidden by default, due to my pagination logic -->
+				<div class="chatlog__message-group" style="<%= i >= defaultPerPage ? "display: none;" : "" %>" id="<%=i%>" fname="<%=data.messages[i].filename%>" userID="<%= member.id %>" messageID="<%= data.messages[i].id %>" username="<%= member.username %>" nick="<%= member.nick || member.username %>">  
+				
+					<div class="chatlog__author-avatar-container">
+						<img class="chatlog__author-avatar" src="<%= member.avatarURL %>">
+					</div>
+					<div class="chatlog__messages">
+					
+						<span class="chatlog__author-name" title="Filter media by this user" style="<%= getUserColor(member.id) %>" onclick="filterByClicked(this)" userID="<%=member.id%>" ><%= member.nick || member.username %></span>
+						
+						<% if (member.bot) { %>
+							<span class="chatlog__bot-tag">BOT</span>
+						<% } else if (member.id == null && member.avatarURL == "https://discordapp.com/assets/322c936a8c8be1b803cd94861bdfa868.png") { %>
+							<span class="chatlog__left-tag">USER LEFT</span> 
+						<% } %>
+						
+						<% 
+							let approxDate = new Date(parseInt(data.messages[i].id) / 4194304 + 1420070400000)
+							let year = approxDate.getFullYear()
+							let month = (approxDate.getMonth()+1).toString().padStart(2, '0')
+							let day = approxDate.getDate()
+						%>
+						<span class="chatlog__timestamp"><%= `${day}/${month}/${year}` %></span>
+
+						<div class="chatlog__message">
+						
+							<div class="chatlog__attachment">
+							
+								<% if (data.messages[i].url.toLowerCase().includes("mp4")){ %>
+								
+									<a class="img-link" href="<%= data.messages[i].url %>" fname="<%=data.messages[i].filename%>" target="_blank"> <%= data.messages[i].filename %> </a><br>
+										
+									<div class="image-and-overlay" onclick="selectImage(this)" id="<%=i%>">
+										<video class="chatlog__attachment-video-container" height="<%= i > defaultPerPage ? "0" : "" %>" preload="metadata" controls loop>
+											<source class="chatlog__attachment-video" src="<%= i > defaultPerPage ? "" : data.messages[i].url %>" hiddenurl="<%= data.messages[i].url %>" type="video/mp4">
+										</video>
+										
+										<div class="attachment-overlay-hover" style="display: none"></div>
+										<div class="attachment-overlay" style="display: none">
+											<div class="overlay-select-indicator"> 
+												<img class="image-checkmark" src="https://cdn.iconscout.com/icon/free/png-256/checkmark-1767471-1502541.png"> 
+											</div>
+										</div>
+									</div>
+									
+								<% } else if (data.messages[i].url.toLowerCase().includes("webm")){ %>
+								
+									<a class="img-link" href="<%= data.messages[i].url %>" fname="<%=data.messages[i].filename%>" target="_blank"> <%= data.messages[i].filename %> </a><br>
+										
+									<div class="image-and-overlay" onclick="selectImage(this)" id="<%=i%>">
+										<video class="chatlog__attachment-video-container" height="<%= i > defaultPerPage ? "0" : "" %>" preload="metadata" controls loop>
+											<source class="chatlog__attachment-video" src="<%= i > defaultPerPage ? "" : data.messages[i].url %>" hiddenurl="<%= data.messages[i].url %>" type="video/webm">
+										</video>
+										
+										<div class="attachment-overlay-hover" style="display: none"></div>
+										<div class="attachment-overlay" style="display: none">
+											<div class="overlay-select-indicator"> 
+												<img class="image-checkmark" src="https://cdn.iconscout.com/icon/free/png-256/checkmark-1767471-1502541.png"> 
+											</div>
+										</div>
+									</div>
+									
+								<% } else { %>
+								
+									<div class="image-and-overlay" onclick="selectImage(this)" id="<%=i%>">
+										<a class="img-link" href="<%= data.messages[i].url %>" fname="<%=data.messages[i].filename%>" target="_blank">
+											<img class="chatlog__attachment-image" src="<%= i > defaultPerPage ? "" : data.messages[i].url %>" hiddenurl="<%= data.messages[i].url %>" alt="<%= data.messages[i].filename %>">
+										</a>
+										
+										<div class="attachment-overlay-hover" style="display: none"></div>
+										<div class="attachment-overlay" style="display: none">
+											<div class="overlay-select-indicator"> 
+												<img class="image-checkmark" src="https://cdn.iconscout.com/icon/free/png-256/checkmark-1767471-1502541.png"> 
+											</div>
+										</div>
+										
+									</div>
+								
+									<div class="sauce-container">
+										<a href="https://iqdb.org/?url=<%= data.messages[i].url %>" target="_blank">
+											<div class="sauce">
+												<img class="sauce-img" src="/images/iqdb.png">
+												<div class="sauce-txt">IQDB</div>
+											</div>
+										</a>
+										<a href="https://saucenao.com/search.php?url=<%= data.messages[i].url %>" target="_blank">
+											<div class="sauce">
+												<img class="sauce-img" src="/images/saucenao.png">
+												<div class="sauce-txt">SauceNAO</div>
+											</div>
+										</a>
+									</div>
+									
+								<% } %>
+								
+							</div>
+
+						</div>
+					</div>
+				</div>
+			<% } %>
+		</div>
+	</div>
+	
+	<% } %>
+</div>
+
+</body>
+</html>
+
+<% 
+	function decimalColorToHTMLcolor(num){
+		let r = Math.floor(num / (256*256))
+		let g = Math.floor(num / 256) % 256
+		let b = num % 256
+
+		//  desired format example:
+		//  color: rgb(215, 52, 42)
+		
+		return `color: rgb(${r}, ${g}, ${b})`
+	}
+
+	function getUserColor(userID){
+		// get their roles, filter out the ones that have no set color, 
+		// and then get the one with the highest position
+		
+		if (!userID) return "rgb(94, 97, 101)"
+		const member = data.channel.guild.members.get(userID)
+		if (!member) return "rgb(94, 97, 101)"
+		
+		const roleList = []
+		
+		member.roles.forEach( roleID => {
+			const r = data.channel.guild.roles.get(roleID)
+			if (r.color) roleList.push(r)
+		})
+		
+		const highestPosition = Math.max(...roleList.map( o => o.position ))
+		const highestRole = data.channel.guild.roles.find( r => r.position == highestPosition )
+		
+		return highestRole ? decimalColorToHTMLcolor(highestRole.color) : null
+	} 
+%>

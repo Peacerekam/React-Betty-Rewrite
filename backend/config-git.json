@@ -1,0 +1,10 @@
+{
+  "token": " your token ",
+  "clientSecret": "",
+  "prefix": "b?",
+  "storageChannel": null,
+  "gelbooru": {
+	"key": null,
+	"user": null
+  }
+}

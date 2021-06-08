@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<%- include("../partials/header.ejs") %>
+</head>
+
+<body>
+<!--
+<%- include("../partials/nav.ejs") %>
+-->
+<% if (data.error){ %>
+	<%- include("../partials/error.ejs") %>
+<% } else { %>
+
+<div class="main-browse">
+	
+	<div class="fancy-text-input-container">
+		<input autocomplete="off" class="fancy-text-input" id="server-id-input" type="text" placeholder="Server ID"/><span onclick="goToServerPage()" class="fancy-text-input-label">></span>
+	</div>
+	
+	<% if (!data.user){ %>
+		or...
+		<br>
+		<button autocomplete="off" class="fancy-button-orange-main-browse" onclick="discordAuth()">Authenticate with Discord</button>
+	<% }
+	else if (data.user && data.guilds){ %>
+		
+		<a href="/browse?logout=true" title="Click to log out">
+			<div class="user-welcome">
+				<span class="av-cont"><img class="av" src="<%= data.user.avatar ? `https://cdn.discordapp.com/avatars/${data.user.id}/${data.user.avatar}` : "/images/defaultAv.png" %>"></span><span class="label"><%=data.user.username%></span>
+			</div>
+		</a>
+	
+	<div class="server-list">
+		<% for (let g of Object.values(data.guilds)){%>
+
+			<% if (g.available) { %>
+				<a href="<%= `/browse/${g.id}` %>">
+			<% } %>
+			
+				<div class="<%= g.available ? "active-guild" : "inactive-guild" %>">
+					<div class="preamble__guild-icon-container">
+						<img class="channel-preview" src="<%= `https://cdn.discordapp.com/icons/${g.id}/${g.icon}`%>" onerror="this.onerror=null; this.src='/images/defaultAv.png'">
+					</div>
+					<div class="preamble__entries-container">
+
+						<div class="listed-guild-name">
+						
+						<% if (g.available) { %>
+							<%= g.name %><br><div class="count"><%= g.count == 1 ? "1 channel" : `${g.count} channels` %> available</div>
+						<% } else { %>
+							<%= g.name %><br><div class="count">NOT IN DATABASE</div>
+						<% } %>
+						
+						</div>
+					</div>
+				</div>
+				
+			<% if (g.available) { %>
+				</a>
+			<% } %>
+		
+		<% } %>
+	</div>
+	<% }%>
+	<br>
+
+	<% } %>
+	
+</div>
+	
+<script>
+	document.onkeypress = function (e) {
+		if (e.charCode == 13){
+			goToServerPage()
+		}
+	}
+</script>
+
+</body>
+</html>

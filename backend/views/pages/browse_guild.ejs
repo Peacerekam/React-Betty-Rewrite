@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>	
+<%- include("../partials/header.ejs") %>
+</head>
+<body>
+<%- include("../partials/nav.ejs") %>
+
+	<% if (data.error){ %>
+		<%- include("../partials/error.ejs") %>
+	<% } else { %>
+	
+	<div class="channel-list">
+		<% for (var i = 0; i < data.channels.length; i++){ %>
+		<div class="preamble-channel-custom">
+			<div class="preamble__guild-icon-container">
+				<a href="<%= `/browse/${data.channels[i].guild.id}/${data.channels[i].id}` %>">
+					<img class="channel-preview" src="<%= data.channels[i].lastImage %>" onerror="this.onerror=null; this.src='/images/defaultAv.png'">
+				</a>
+			</div>
+			<div class="preamble__entries-container">
+				<a href="<%= `/browse/${data.channels[i].guild.id}/${data.channels[i].id}` %>">
+					<div class="preamble__entry">
+					<% 
+					let parentChannel = data.channels[i].guild.channels.get(data.channels[i].parentID)
+					if (parentChannel){
+					%>
+						<b>#</b> <%= data.channels[i].name %> <div class="parent-channel-label"><%= parentChannel.name %></div>
+					<% } else { %>
+						<%= data.channels[i].name %>
+					<% } %>
+					</div>
+				</a>
+				<div class="preamble__entry preamble__entry--small"><%= data.channels[i].topic %></div>
+			</div>
+		</div>
+		<%
+			}
+		} 
+		%>
+	</div>
+</body>
+</html>
