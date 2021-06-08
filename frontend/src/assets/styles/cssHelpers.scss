@@ -1,0 +1,29 @@
+$nums: (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100);
+$dirs: (top, bottom, left, right);
+
+@each $num in $nums {
+    
+    // all directions
+    .m-#{$num} {
+        margin: #{$num}px !important;
+    }
+
+    .p-#{$num} {
+        padding: #{$num}px !important;
+    }
+
+    // specific directions
+    @each $dir in $dirs {
+        .m#{str-slice($dir, 0, 1)}-#{$num} {
+            margin-#{$dir}: #{$num}px !important;
+        }
+  
+        .p#{str-slice($dir, 0, 1)}-#{$num} {
+            padding-#{$dir}: #{$num}px !important;
+        }
+    }
+}
+
+.pointer {
+    cursor: pointer;
+}

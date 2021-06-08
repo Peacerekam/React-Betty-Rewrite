@@ -1,0 +1,23 @@
+{
+    "restoreTerminals.artificialDelayMilliseconds": 500,
+    "restoreTerminals.terminals": [
+
+
+        {
+            "splitTerminals": [
+              {
+                "name": "React Frontend",
+                "commands": ["cd frontend", "npm start"]
+              },
+              {
+                "name": "Bot & Express Backend",
+                "commands": ["cd backend", "node index.js"]
+              },
+              {
+                "name": "TypeScript Watcher",
+                "commands": ["cd backend", "tsc -w"]
+              }
+            ]
+          },
+    ]
+}
